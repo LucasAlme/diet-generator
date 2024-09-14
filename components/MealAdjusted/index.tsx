@@ -218,7 +218,7 @@ const adjustMeal = (meal: FoodItem[], targetCalories: number): FoodItem[] => {
 
       const maxAllowedQuantity = Math.min(
         item.maxQuantity,
-        item.quantity + additionalQuantity
+        Math.round(item.quantity + additionalQuantity) // Arredondando a quantidade
       );
       const newCalories = Math.round(caloriePerUnit * maxAllowedQuantity);
       const newProtein = item.protein
@@ -266,8 +266,10 @@ const adjustQuantitiesByCalories = (
       } else if (mealCalories < targetCalories && item.maxQuantity) {
         const maxAllowedQuantity = Math.min(
           item.maxQuantity,
-          item.quantity +
-            ((targetCalories - mealCalories) * 100) / item.calories
+          Math.round(
+            item.quantity +
+              ((targetCalories - mealCalories) * 100) / item.calories
+          )
         );
         mealItems.push({ ...item, quantity: maxAllowedQuantity });
         mealCalories += item.calories * (maxAllowedQuantity / 100);
@@ -316,6 +318,8 @@ const MealAdjusted = ({ targetCalories }: MealProps) => {
     }
   }, [targetCalories]);
 
+  console.log(adjustedDiet);
+
   return (
     <ScrollView style={styles.container}>
       {Object.entries(adjustedDiet).map(([mealKey, items]) => (
@@ -326,7 +330,9 @@ const MealAdjusted = ({ targetCalories }: MealProps) => {
               <Text style={styles.itemName}>{item.name}</Text>
               <Text style={styles.itemDetails}>
                 {item.quantity > 0
-                  ? `${item.quantity} ${item.unity} - ${item.calories} Cal`
+                  ? `${Math.round(item.quantity)} ${item.unity} - ${Math.round(
+                      item.calories
+                    )} Cal`
                   : "A vontade"}
               </Text>
             </View>
