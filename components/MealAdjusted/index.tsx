@@ -1,25 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 
-interface FoodItem {
+type FoodItem = {
   name: string;
-  quantity: number;
   calories: number;
   carbs?: number;
   fat?: number;
   protein?: number;
-  unity: string;
+  quantity: number;
   maxQuantity?: number;
   minQuantity?: number;
-}
+  unity: string;
+};
 
-interface DietMeals {
-  firstMeal: FoodItem[];
-  secondMeal: FoodItem[];
-  thirdMeal: FoodItem[];
-  fourthMeal: FoodItem[];
-  fifthMeal?: FoodItem[];
-}
+type DietMeals = {
+  [key: string]: FoodItem[] | undefined;
+};
 
 const dietMeals: DietMeals = {
   firstMeal: [
@@ -93,7 +89,7 @@ const dietMeals: DietMeals = {
     },
     {
       name: "Verduras (Alface, rúcula, agrião...)",
-      quantity: "a vontade",
+      quantity: 0,
       calories: 0,
       unity: "x",
     },
@@ -180,7 +176,7 @@ const dietMeals: DietMeals = {
     },
     {
       name: "Verduras (Alface, rúcula, agrião...)",
-      quantity: "a vontade",
+      quantity: 0,
       calories: 0,
       unity: "x",
     },
@@ -198,6 +194,7 @@ const dietMeals: DietMeals = {
   ],
 };
 
+// Calcula as calorias totais de uma refeição
 const calculateTotalCalories = (items: FoodItem[]): number => {
   return items.reduce(
     (total, item) => total + item.calories * (item.quantity / 100),
@@ -205,6 +202,7 @@ const calculateTotalCalories = (items: FoodItem[]): number => {
   );
 };
 
+// Ajusta a refeição para se aproximar da meta de calorias
 const adjustMeal = (meal: FoodItem[], targetCalories: number): FoodItem[] => {
   let totalCalories = calculateTotalCalories(meal);
 
@@ -213,34 +211,29 @@ const adjustMeal = (meal: FoodItem[], targetCalories: number): FoodItem[] => {
   }
 
   return meal.map((item) => {
-    if (typeof item.quantity === "number") {
+    if (item.maxQuantity && item.quantity < item.maxQuantity) {
       const caloriePerUnit = item.calories / 100;
-      const currentQuantity = item.quantity;
-      const totalCaloriesFromCurrentQuantity = caloriePerUnit * currentQuantity;
-
       const additionalCaloriesNeeded = targetCalories - totalCalories;
       const additionalQuantity = additionalCaloriesNeeded / caloriePerUnit;
 
-      const maxQuantity = item.maxQuantity ?? currentQuantity;
-      const adjustedQuantity = Math.min(
-        currentQuantity + additionalQuantity,
-        maxQuantity
+      const maxAllowedQuantity = Math.min(
+        item.maxQuantity,
+        item.quantity + additionalQuantity
       );
-
-      const newCalories = Math.round(caloriePerUnit * adjustedQuantity);
+      const newCalories = Math.round(caloriePerUnit * maxAllowedQuantity);
       const newProtein = item.protein
-        ? Math.round((item.protein / 100) * adjustedQuantity)
+        ? Math.round((item.protein / 100) * maxAllowedQuantity)
         : undefined;
       const newCarbs = item.carbs
-        ? Math.round((item.carbs / 100) * adjustedQuantity)
+        ? Math.round((item.carbs / 100) * maxAllowedQuantity)
         : undefined;
       const newFat = item.fat
-        ? Math.round((item.fat / 100) * adjustedQuantity)
+        ? Math.round((item.fat / 100) * maxAllowedQuantity)
         : undefined;
 
       return {
         ...item,
-        quantity: adjustedQuantity,
+        quantity: maxAllowedQuantity,
         calories: newCalories,
         protein: newProtein,
         carbs: newCarbs,
@@ -251,28 +244,17 @@ const adjustMeal = (meal: FoodItem[], targetCalories: number): FoodItem[] => {
   });
 };
 
+// Ajusta as quantidades das refeições para atingir a meta de calorias
 const adjustQuantitiesByCalories = (
   dietMeals: DietMeals,
   targetCalories: number
 ): DietMeals => {
-  const mealsArray = [
-    { meal: "firstMeal", items: dietMeals.firstMeal },
-    { meal: "secondMeal", items: dietMeals.secondMeal },
-    { meal: "thirdMeal", items: dietMeals.thirdMeal },
-    { meal: "fourthMeal", items: dietMeals.fourthMeal },
-  ];
+  const mealKeys = Object.keys(dietMeals);
+  const adjustedMeals: DietMeals = {};
+  let totalCalories = 0;
 
-  const adjustedMeals: DietMeals = {
-    firstMeal: [],
-    secondMeal: [],
-    thirdMeal: [],
-    fourthMeal: [],
-    fifthMeal: [],
-  };
-
-  let currentCalories = 0;
-
-  mealsArray.forEach(({ meal, items }) => {
+  mealKeys.forEach((mealKey) => {
+    const items = dietMeals[mealKey] || [];
     let mealItems: FoodItem[] = [];
     let mealCalories = 0;
 
@@ -292,82 +274,47 @@ const adjustQuantitiesByCalories = (
       }
     });
 
-    adjustedMeals[meal as keyof DietMeals] = mealItems;
-    currentCalories += mealCalories;
+    adjustedMeals[mealKey] = mealItems;
+    totalCalories += mealCalories;
   });
 
-  while (currentCalories < targetCalories) {
-    let additionalItems: FoodItem[] = [];
-    let remainingCalories = targetCalories - currentCalories;
-
-    mealsArray.forEach(({ items }) => {
-      items.forEach((item) => {
-        if ((item.maxQuantity ?? item.quantity) > item.quantity) {
-          const maxAllowedQuantity = Math.min(
-            remainingCalories / (item.calories / 100),
-            (item.maxQuantity ?? item.quantity) - item.quantity
-          );
-
-          if (maxAllowedQuantity > 0) {
-            additionalItems.push({
-              ...item,
-              quantity: item.quantity + maxAllowedQuantity,
-              calories:
-                (item.calories * (item.quantity + maxAllowedQuantity)) / 100,
-              protein: item.protein
-                ? (item.protein * (item.quantity + maxAllowedQuantity)) / 100
-                : undefined,
-              carbs: item.carbs
-                ? (item.carbs * (item.quantity + maxAllowedQuantity)) / 100
-                : undefined,
-              fat: item.fat
-                ? (item.fat * (item.quantity + maxAllowedQuantity)) / 100
-                : undefined,
-            });
-          }
-        }
-      });
-    });
-
-    let addedCalories = 0;
-    additionalItems = additionalItems
-      .map((item) => {
-        const itemCalories = item.calories * (item.quantity / 100);
-        if (addedCalories + itemCalories <= remainingCalories) {
-          addedCalories += itemCalories;
-          return item;
-        } else {
-          const allowedQuantity =
-            ((remainingCalories - addedCalories) / (item.calories / 100)) * 100;
-          addedCalories = remainingCalories;
-          return { ...item, quantity: item.quantity + allowedQuantity };
-        }
-      })
-      .filter((item) => item.quantity > 0);
-
-    if (additionalItems.length > 0) {
-      if (!adjustedMeals.fifthMeal) {
-        adjustedMeals.fifthMeal = additionalItems;
-      } else {
-        adjustedMeals.fifthMeal.push(...additionalItems);
-      }
-      currentCalories += calculateTotalCalories(additionalItems);
-    } else {
-      break;
-    }
+  // Se o total de calorias não atingir o target, cria refeições adicionais
+  while (totalCalories < targetCalories) {
+    const mealKey =
+      mealKeys[Object.keys(adjustedMeals).length % mealKeys.length];
+    const baseMeal = dietMeals[mealKey] || [];
+    const newMeal = adjustMeal(baseMeal, targetCalories - totalCalories);
+    const newMealKey = `meal${Object.keys(adjustedMeals).length + 1}`;
+    adjustedMeals[newMealKey] = newMeal;
+    totalCalories += calculateTotalCalories(newMeal);
   }
+
+  // Ajusta a exibição das verduras
+  Object.keys(adjustedMeals).forEach((mealKey) => {
+    adjustedMeals[mealKey] = (adjustedMeals[mealKey] || []).map((item) => ({
+      ...item,
+      quantity: item.calories === 0 ? 0 : item.quantity,
+    }));
+  });
 
   return adjustedMeals;
 };
 
-const App = () => {
-  const [adjustedDiet, setAdjustedDiet] = useState<DietMeals>(dietMeals);
+interface MealProps {
+  targetCalories: number;
+}
+const MealAdjusted = ({ targetCalories }: MealProps) => {
+  const [adjustedDiet, setAdjustedDiet] = useState<DietMeals>({} as DietMeals);
 
   useEffect(() => {
-    const targetCalories = 2000;
-    const adjustedDiet = adjustQuantitiesByCalories(dietMeals, targetCalories);
-    setAdjustedDiet(adjustedDiet);
-  }, []);
+    if (targetCalories !== 0) {
+      const adjustedDiet = adjustQuantitiesByCalories(
+        dietMeals,
+        targetCalories
+      );
+      setAdjustedDiet(adjustedDiet);
+    }
+  }, [targetCalories]);
 
   return (
     <ScrollView style={styles.container}>
@@ -378,7 +325,9 @@ const App = () => {
             <View key={index} style={styles.itemContainer}>
               <Text style={styles.itemName}>{item.name}</Text>
               <Text style={styles.itemDetails}>
-                {item.quantity} {item.unity} - {item.calories} Cal
+                {item.quantity > 0
+                  ? `${item.quantity} ${item.unity} - ${item.calories} Cal`
+                  : "A vontade"}
               </Text>
             </View>
           ))}
@@ -412,4 +361,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+export default MealAdjusted;
