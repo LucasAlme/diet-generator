@@ -3,13 +3,13 @@ import { Container, Content, SubTitle, Title } from "./style";
 import React, { useState } from "react";
 import SimpleInput from "@/components/SimpleInput";
 import { RowInputContainer } from "@/components/GenderSelector/style";
+import MealAdjuster from "@/components/MealAdjusted";
 export default function Index() {
   const [isWomenSelected, setIsWomanSelected] = useState(false);
   const [isManSelected, setIsManSelected] = useState(false);
   const [age, setAge] = useState("");
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
-  const [quantity, setQuantity] = useState("");
 
   return (
     <Container>
@@ -55,13 +55,9 @@ export default function Index() {
             onChange={setHeight}
             value={height}
           />
-          <SimpleInput
-            title="Qtd refeições"
-            placeholder="4"
-            onChange={setQuantity}
-            value={quantity}
-          />
         </RowInputContainer>
+
+        <MealAdjuster />
       </Content>
     </Container>
   );

@@ -4,7 +4,7 @@ import { styled } from "styled-components/native";
 
 export const Container = styled.View`
   flex: 1;
-  background-color: ${Colors.light.background};
+  background-color: ${Colors.light.yellowSmartFit};
   padding-top: ${STATUSBAR_HEIGHT}px;
 `;
 
@@ -19,5 +19,9 @@ export const SubTitle = styled.Text`
 `;
 
 export const Content = styled.View`
+  margin: 10px;
   padding: 20px;
+  flex: 1;
+  background-color: ${Colors.light.background};
+  border-radius: 10px;
 `;
