@@ -1,5 +1,26 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View } from "react-native";
+import {
+  Container,
+  ContainerModal,
+  ContainerOption,
+  ItemContainer,
+  ItemDetails,
+  ItemName,
+  MealContainer,
+  MealTitle,
+  ModalOptions,
+  ModalTitle,
+  OtherOptionTouchable,
+  TextOtherOption,
+  Title,
+} from "./style";
+
+import {
+  BottomSheetModal,
+  BottomSheetModalProps,
+  BottomSheetScrollView,
+} from "@gorhom/bottom-sheet";
 
 type FoodItem = {
   name: string;
@@ -11,6 +32,7 @@ type FoodItem = {
   maxQuantity?: number;
   minQuantity?: number;
   unity: string;
+  otherOptions?: string[];
 };
 
 type DietMeals = {
@@ -29,6 +51,7 @@ const dietMeals: DietMeals = {
       fat: 5.5,
       maxQuantity: 150,
       minQuantity: 50,
+      otherOptions: ["Queijo Mussarela", "Queijo Minas", "Ricota"],
     },
     {
       name: "Aveia em flocos",
@@ -40,6 +63,7 @@ const dietMeals: DietMeals = {
       fat: 3,
       maxQuantity: 100,
       minQuantity: 10,
+      otherOptions: ["Aveia em flocos finos", "Farelo de Aveia"],
     },
     {
       name: "Whey concentrado",
@@ -62,6 +86,7 @@ const dietMeals: DietMeals = {
       fat: 0.3,
       maxQuantity: 200,
       minQuantity: 50,
+      otherOptions: ["Uva", "Abacate", "Morango", "BlueBerry"],
     },
   ],
   secondMeal: [
@@ -75,6 +100,7 @@ const dietMeals: DietMeals = {
       fat: 0.3,
       maxQuantity: 500,
       minQuantity: 50,
+      otherOptions: ["Batata Inglesa", "Macarrão", "Mandioca", "Batata Doce"],
     },
     {
       name: "File de peito de frango grelhado",
@@ -86,6 +112,7 @@ const dietMeals: DietMeals = {
       fat: 2.5,
       maxQuantity: 400,
       minQuantity: 100,
+      otherOptions: ["Carne de patinho", "Peixe branco", "File mignon"],
     },
     {
       name: "Verduras (Alface, rúcula, agrião...)",
@@ -94,7 +121,7 @@ const dietMeals: DietMeals = {
       unity: "x",
     },
     {
-      name: "Cenoura/beterraba/couve-flor/chuchu/pepino/espinafre/couve",
+      name: "Cenoura cozida",
       quantity: 100,
       calories: 41,
       unity: "g",
@@ -103,6 +130,26 @@ const dietMeals: DietMeals = {
       fat: 0.2,
       maxQuantity: 100,
       minQuantity: 20,
+      otherOptions: [
+        "beterraba",
+        "Couve-flor",
+        "Chuchu",
+        "Pepino",
+        "Espinafre",
+        "Couve",
+      ],
+    },
+    {
+      name: "Laranja",
+      quantity: 100,
+      calories: 47,
+      unity: "g",
+      protein: 1,
+      carbs: 12,
+      fat: 0.1,
+      maxQuantity: 100,
+      minQuantity: 50,
+      otherOptions: ["Mexerica"],
     },
   ],
   thirdMeal: [
@@ -116,6 +163,7 @@ const dietMeals: DietMeals = {
       fat: 5.5,
       maxQuantity: 150,
       minQuantity: 50,
+      otherOptions: ["Queijo Mussarela", "Queijo Minas", "Ricota"],
     },
     {
       name: "Aveia em flocos",
@@ -127,6 +175,7 @@ const dietMeals: DietMeals = {
       fat: 6,
       maxQuantity: 100,
       minQuantity: 10,
+      otherOptions: ["Aveia em flocos finos", "Farelo de Aveia"],
     },
     {
       name: "Whey concentrado",
@@ -149,6 +198,7 @@ const dietMeals: DietMeals = {
       fat: 0.3,
       maxQuantity: 200,
       minQuantity: 50,
+      otherOptions: ["Uva", "Abacate", "Morango", "Blueberry"],
     },
   ],
   fourthMeal: [
@@ -162,6 +212,7 @@ const dietMeals: DietMeals = {
       fat: 0.3,
       maxQuantity: 500,
       minQuantity: 50,
+      otherOptions: ["Batata Inglesa", "Macarrão", "Mandioca", "Batata Doce"],
     },
     {
       name: "File de peito de frango grelhado",
@@ -173,6 +224,7 @@ const dietMeals: DietMeals = {
       fat: 2.5,
       maxQuantity: 400,
       minQuantity: 100,
+      otherOptions: ["Carne de patinho", "Peixe branco", "File mignon"],
     },
     {
       name: "Verduras (Alface, rúcula, agrião...)",
@@ -181,7 +233,7 @@ const dietMeals: DietMeals = {
       unity: "x",
     },
     {
-      name: "Cenoura/beterraba/couve-flor/chuchu/pepino/espinafre/couve",
+      name: "Cenoura cozida",
       quantity: 100,
       calories: 41,
       unity: "g",
@@ -190,6 +242,26 @@ const dietMeals: DietMeals = {
       fat: 0.2,
       maxQuantity: 100,
       minQuantity: 20,
+      otherOptions: [
+        "beterraba",
+        "Couve-flor",
+        "Chuchu",
+        "Pepino",
+        "Espinafre",
+        "Couve",
+      ],
+    },
+    {
+      name: "Laranja",
+      quantity: 100,
+      calories: 47,
+      unity: "g",
+      protein: 1,
+      carbs: 12,
+      fat: 0.1,
+      maxQuantity: 100,
+      minQuantity: 50,
+      otherOptions: ["Mexerica", "Melão", "Melancia"],
     },
   ],
 };
@@ -307,7 +379,9 @@ interface MealProps {
 }
 const MealAdjusted = ({ targetCalories }: MealProps) => {
   const [adjustedDiet, setAdjustedDiet] = useState<DietMeals>({} as DietMeals);
-
+  const [options, setOptions] = useState([] as string[]);
+  const bottomModalRef = useRef<BottomSheetModal>(null);
+  const [foodToChange, setFoodToChange] = useState("");
   useEffect(() => {
     if (targetCalories !== 0) {
       const adjustedDiet = adjustQuantitiesByCalories(
@@ -318,53 +392,59 @@ const MealAdjusted = ({ targetCalories }: MealProps) => {
     }
   }, [targetCalories]);
 
-  console.log(adjustedDiet);
+  function handleOtherOptions(options: string[] | undefined, name: string) {
+    if (options && options.length > 0) {
+      setOptions(options);
+      setFoodToChange(name);
+      bottomModalRef.current?.present();
+    }
+  }
 
   return (
-    <ScrollView style={styles.container}>
-      {Object.entries(adjustedDiet).map(([mealKey, items]) => (
-        <View key={mealKey} style={styles.mealContainer}>
-          <Text style={styles.mealTitle}>{mealKey}</Text>
-          {items.map((item, index) => (
-            <View key={index} style={styles.itemContainer}>
-              <Text style={styles.itemName}>{item.name}</Text>
-              <Text style={styles.itemDetails}>
-                {item.quantity > 0
-                  ? `${Math.round(item.quantity)} ${item.unity} - ${Math.round(
-                      item.calories
-                    )} Cal`
-                  : "A vontade"}
-              </Text>
-            </View>
+    <>
+      <Container>
+        {Object.entries(adjustedDiet).map(([mealKey, items], index) => (
+          <MealContainer key={mealKey}>
+            <MealTitle>Refeição {index + 1}</MealTitle>
+            {items &&
+              items?.length > 0 &&
+              items.map((item, index) => (
+                <ItemContainer key={index}>
+                  <View style={{ width: "60%" }}>
+                    <ItemName numberOfLines={2}>{item.name}</ItemName>
+                    <ItemDetails>
+                      {item.quantity > 0
+                        ? `${Math.round(item.quantity)} ${
+                            item.unity
+                          } - ${Math.round(item.calories)} Cal`
+                        : "A vontade"}
+                    </ItemDetails>
+                  </View>
+
+                  {item.otherOptions && item.otherOptions?.length > 0 && (
+                    <OtherOptionTouchable
+                      onPress={() =>
+                        handleOtherOptions(item.otherOptions, item.name)
+                      }
+                    >
+                      <TextOtherOption>Outras Opções</TextOtherOption>
+                    </OtherOptionTouchable>
+                  )}
+                </ItemContainer>
+              ))}
+          </MealContainer>
+        ))}
+      </Container>
+      <BottomSheetModal ref={bottomModalRef} snapPoints={["30%"]}>
+        <ContainerOption>
+          <ModalTitle>Outras Opções para substituir {foodToChange}</ModalTitle>
+          {options.map((option) => (
+            <Title>- {option}</Title>
           ))}
-        </View>
-      ))}
-    </ScrollView>
+        </ContainerOption>
+      </BottomSheetModal>
+    </>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-  mealContainer: {
-    marginBottom: 20,
-  },
-  mealTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  itemContainer: {
-    marginVertical: 10,
-  },
-  itemName: {
-    fontSize: 16,
-  },
-  itemDetails: {
-    fontSize: 14,
-    color: "gray",
-  },
-});
 
 export default MealAdjusted;
